@@ -1,16 +1,524 @@
 ---
-
+const pbUrl = import.meta.env.PUBLIC_PB_DOMAIN_URL;
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Messagerie</title>
+    <style is:global>
+      :root {
+        --color-primary: #4CAF50;
+        --color-secondary: #2E7D32;
+        --color-accent: #81C784;
+        --color-light: #E8F5E9;
+        --color-gradient-start: rgba(76, 175, 80, 0.8);
+        --color-gradient-end: rgba(46, 125, 50, 0.9);
+        --color-text: #333333;
+        --color-message-own: #E8F5E9;
+        --color-message-other: #ffffff;
+        --color-message-own-alt: #C8E6C9;
+        --color-message-other-alt: #F1F1F1;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background-color: #f7f7f7;
+        background: linear-gradient(135deg, #f7f7f7, var(--color-light));
+        color: var(--color-text);
+        height: 100%;
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0));
+        max-width: 100%;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      .bg-element {
+        position: fixed;
+        border-radius: 50%;
+        opacity: 0.1;
+        background: var(--color-primary);
+        z-index: -1;
+      }
+
+      .bg-element-1 {
+        width: 300px;
+        height: 300px;
+        top: -100px;
+        right: -100px;
+        animation: float 15s infinite ease-in-out;
+      }
+
+      .bg-element-2 {
+        width: 200px;
+        height: 200px;
+        bottom: -80px;
+        left: 10%;
+        animation: float 20s infinite ease-in-out reverse;
+      }
+
+      @keyframes float {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(10px, -10px) rotate(2deg); }
+        50% { transform: translate(0, 15px) rotate(0deg); }
+        75% { transform: translate(-10px, -5px) rotate(-2deg); }
+        100% { transform: translate(0, 0) rotate(0deg); }
+      }
+
+      h1 {
+        text-align: center;
+        color: var(--color-secondary);
+        font-size: 1.6rem;
+        margin-bottom: 1rem;
+        grid-row: 1;
+        position: relative;
+        padding-bottom: 0.5rem;
+      }
+
+      h1::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+        border-radius: 1.5px;
+      }
+
+      #pseudo-display {
+        color: var(--color-primary);
+        font-weight: 600;
+      }
+
+      .header-controls {
+        grid-row: 2;
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+      }
+
+      #logout-button {
+        background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+        color: white;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 2px 10px rgba(46, 125, 50, 0.2);
+      }
+
+      #logout-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+      }
+
+      #logout-button:active {
+        transform: translateY(1px);
+      }
+
+      #messages-container {
+        grid-row: 3;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        overflow-y: auto;
+        padding: 1rem 0.5rem;
+        margin-bottom: 1rem;
+        max-height: calc(100vh - 170px - env(safe-area-inset-bottom, 0px));
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-accent) #f1f1f1;
+      }
+
+      #messages-container::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #messages-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      #messages-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-accent);
+        border-radius: 10px;
+      }
+
+      .message {
+        display: grid;
+        margin-bottom: 0.5rem;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .bubble {
+        max-width: 85%;
+        padding: 0.8rem;
+        border-radius: 14px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        position: relative;
+        transition: all 0.2s;
+      }
+
+      .bubble:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+      }
+
+      .bubble.left {
+        border-bottom-left-radius: 2px;
+        background-color: var(--color-message-other);
+        border-left: 3px solid var(--color-accent);
+        margin-right: auto;
+      }
+
+      .bubble.right {
+        border-bottom-right-radius: 2px;
+        background-color: var(--color-message-own);
+        border-right: 3px solid var(--color-primary);
+        margin-left: auto;
+      }
+
+      /* Style alterné pour un message sur deux */
+      .message.even .bubble.left {
+        background-color: var(--color-message-other-alt);
+      }
+
+      .message.even .bubble.right {
+        background-color: var(--color-message-own-alt);
+      }
+
+      .pseudo {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+        color: var(--color-secondary);
+      }
+
+      .bubble.right .pseudo {
+        color: var(--color-primary);
+      }
+
+      .content {
+        word-break: break-word;
+        line-height: 1.4;
+      }
+
+      #message-form {
+        grid-row: 4;
+        width: 100%;
+        position: relative;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      .input-container {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.8rem;
+        background: white;
+        padding: 0.8rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      #message-input {
+        padding: 0.8rem 1rem;
+        border: 2px solid var(--color-light);
+        border-radius: 8px;
+        outline: none;
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      #message-input:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+      }
+
+      #message-form button {
+        background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+        color: white;
+        border: none;
+        padding: 0.8rem 1.2rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #message-form button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+      }
+
+      #message-form button:active {
+        transform: translateY(1px);
+      }
+
+      #message-form button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%);
+        transform-origin: 50% 50%;
+      }
+
+      #message-form button:focus::after {
+        animation: ripple 1s ease-out;
+      }
+
+      @keyframes ripple {
+        0% {
+          transform: scale(0, 0);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(20, 20);
+          opacity: 0;
+        }
+      }
+
+      /* Responsive design */
+      @media (min-width: 768px) {
+        body {
+          padding: 2rem;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .bubble {
+          max-width: 70%;
+        }
+
+        #messages-container {
+          max-height: calc(100vh - 240px - env(safe-area-inset-bottom, 0px));
+        }
+      }
+      
+      /* Ajustements supplémentaires pour l'interface mobile et clavier virtuel */
+      @media (max-height: 600px) {
+        h1 {
+          font-size: 1.3rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        #messages-container {
+          max-height: calc(100vh - 150px - env(safe-area-inset-bottom, 0px));
+        }
+        
+        .input-container {
+          padding: 0.6rem;
+        }
+        
+        #message-input {
+          padding: 0.6rem 0.8rem;
+        }
+        
+        #message-form button {
+          padding: 0.6rem 1rem;
+        }
+      }
+    </style>
+    <script>
+
+
+      // Vérifier si le pseudo existe dans le localStorage, sinon rediriger vers la page de connexion
+      const pseudo = localStorage.getItem('pseudo');
+      if (!pseudo) {
+        window.location.href = '/connectToChat'; // Redirection
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const pseudoDisplay = document.getElementById('pseudo-display');
+        if (pseudoDisplay) {
+          pseudoDisplay.textContent = pseudo;
+        }
+        
+        // Fonction pour gérer le clavier virtuel sur mobile
+        function handleVisualViewport() {
+          if (window.visualViewport) {
+            const viewport = window.visualViewport;
+            const viewportHeight = viewport.height;
+            const windowHeight = window.innerHeight;
+            
+            // Si le clavier est ouvert (la hauteur du viewport est significativement réduite)
+            if (viewportHeight < windowHeight * 0.8) {
+              document.body.classList.add('keyboard-open');
+              document.getElementById('messages-container')!.style.paddingBottom = '150px';
+            } else {
+              document.body.classList.remove('keyboard-open');
+              document.getElementById('messages-container')!.style.paddingBottom = '1rem';
+            }
+            
+            // Faire défiler pour que l'input reste visible
+            if (document.activeElement!.tagName === 'INPUT') {
+              window.scrollTo(0, document.body.scrollHeight);
+            }
+          }
+        }
+        
+        // Ajouter les écouteurs pour le clavier virtuel si disponible
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', handleVisualViewport);
+          window.visualViewport.addEventListener('scroll', handleVisualViewport);
+        }
+      });
+    </script>
+    
+    <style>
+      /* Styles pour quand le clavier virtuel est ouvert */
+      body.keyboard-open #message-form {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0.5rem 1rem;
+        background: rgba(247, 247, 247, 0.95);
+        backdrop-filter: blur(5px);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      }
+      
+      body.keyboard-open #messages-container {
+        padding-bottom: 150px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-element bg-element-1"></div>
+    <div class="bg-element bg-element-2"></div>
+    
+    <h1>Bienvenue <span id="pseudo-display"></span> !</h1>
+
+    <div class="header-controls">
+      <button id="logout-button">Se déconnecter</button>
+    </div>
+
+    <!-- Conteneur des messages -->
+    <div id="messages-container">
+      <!-- Les messages apparaîtront ici -->
+    </div>
+
+    <form id="message-form">
+      <div class="input-container">
+        <input id="message-input" type="text" placeholder="Écris ton message..." required />
+        <button type="submit">Envoyer</button>
+      </div>
+    </form>
+
+    <script type="module" define:vars={{pbUrl}}>
+      import PocketBase from 'https://cdn.jsdelivr.net/npm/pocketbase@0.18.3/dist/pocketbase.es.mjs';
+	  //Astro env variables must begin with "PUBLIC"
+      const pb = new PocketBase(pbUrl);
+      const pseudo = localStorage.getItem('pseudo');
+      const form = document.getElementById('message-form');
+      const input = document.getElementById('message-input');
+      const container = document.getElementById('messages-container');
+      const logoutButton = document.getElementById('logout-button');
+
+      // Animation de l'input au focus
+      input.addEventListener('focus', () => {
+        input.style.transition = 'all 0.3s';
+        input.style.transform = 'translateX(5px)';
+        setTimeout(() => {
+          input.style.transform = 'translateX(0)';
+        }, 200);
+      });
+
+      // Gérer l'envoi du message
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const content = input.value.trim();
+        if (!content) return;
+
+        await pb.collection('messages').create({ pseudo, content });
+
+        input.value = '';
+      });
+
+      // Fonction pour charger et afficher les messages
+      async function loadMessages() {
+        const records = await pb.collection('messages').getFullList({
+          sort: '-created',
+          perPage: 300, // Charger uniquement les 300 derniers
+        });
+
+        container.innerHTML = ''; // Vider le conteneur avant de recharger
+
+        records.reverse(); // On veut afficher les plus anciens en haut
+
+        records.forEach((record, index) => {
+          const isCurrentUser = record.pseudo === pseudo;
+          const messageDiv = document.createElement('div');
+          messageDiv.classList.add('message');
+          
+          // Ajouter une classe "even" aux messages pairs
+          if (index % 2 === 0) {
+            messageDiv.classList.add('even');
+          }
+
+          messageDiv.innerHTML = `
+            <div class="bubble ${isCurrentUser ? 'right' : 'left'}">
+              <div class="pseudo">${record.pseudo}</div>
+              <div class="content">${record.content}</div>
+            </div>
+          `;
+
+          container.appendChild(messageDiv);
+        });
+        
+        // Scroll automatique vers le bas
+        container.scrollTop = container.scrollHeight;
+      }
+
+      loadMessages();
+
+      // Ecouter en temps réel les nouveaux messages
+      pb.collection('messages').subscribe('*', function (e) {
+        if (e.action === 'create') {
+          loadMessages();
+        }
+      });
+
+      // Déconnexion
+      logoutButton.addEventListener('click', () => {
+        localStorage.removeItem('pseudo');
+        window.location.href = '/connectToChat';
+      });
+    </script>
+  </body>
 </html>
