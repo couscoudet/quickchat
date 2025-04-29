@@ -1,47 +1,27 @@
-# Astro Starter Kit: Minimal
+# Quickchat made with Astro Starter Kit + PocketBase + Claude AI 3.7 Sonnet 
 
-```sh
-pnpm create astro@latest -- --template minimal
-```
+## WARNING ⚠️
+Using this chat with messages open policies will allow access to anyone both to your pocketbase URL and messages CRUD action if you don't provide additional securiy
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/minimal)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/minimal)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/minimal/devcontainer.json)
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## How does it work ?
 
-## 🚀 Project Structure
+### Backend
+Install pocketbase in any server you want
+Use the schema pb_schema.json provided in this repo to import a simple messages schema
+**_Merge with existing collection to keep your other tables_**
 
-Inside of your Astro project, you'll see the following folders and files:
+### Frontend
+Just use this repo to have a working frontend 
+1. Download or clone repo
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+2. Install dependencies
+3. Add ENV VARIABLE of your pocketbase backend domain (see .env.example)
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## UI
+Just enter a nickname and chat !
+<img width="1385" alt="quickchat" src="https://github.com/user-attachments/assets/5117b82f-2a80-40d9-bf36-e129ab059158" />
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+You can just test it with dev command or build and deploy
 
-Any static assets, like images, can be placed in the `public/` directory.
 
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
